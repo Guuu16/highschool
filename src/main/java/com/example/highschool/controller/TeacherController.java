@@ -50,10 +50,11 @@ public class TeacherController {
     public Result<Boolean> reviewProject(
             @PathVariable Long id,
             @RequestParam Integer status,
-            @RequestParam(required = false) String feedback) {
+            @RequestParam(required = false) String feedback,
+            @RequestParam(required = false) Integer credit) {
         // 获取当前教师ID的逻辑
         Long teacherId = getCurrentTeacherId();
-        boolean result = projectService.reviewProject(id, teacherId, status, feedback);
+        boolean result = projectService.reviewProject(id, teacherId, status, feedback, credit);
         return Result.success(result);
     }
 

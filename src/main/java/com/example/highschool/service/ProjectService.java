@@ -78,5 +78,5 @@ public interface ProjectService {
      * @param feedback 反馈信息（可选）
      * @return 是否审核成功
      */
-    boolean reviewProject(Long id, Long teacherId, Integer status, String feedback);
+    boolean reviewProject(Long id, Long teacherId, Integer status, String feedback, Integer credit);
 }

@@ -90,7 +90,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     }
 
     @Override
-    public boolean reviewProject(Long id, Long teacherId, Integer status, String feedback) {
+    public boolean reviewProject(Long id, Long teacherId, Integer status, String feedback, Integer credit) {
         // 获取项目信息
         Project project = getById(id);
         if (project == null) {
@@ -106,6 +106,11 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         project.setStatus(status);
         project.setFeedback(feedback);
         project.setUpdateTime(LocalDateTime.now());
+        
+        // 如果审核通过且设置了学分，则更新学分
+        if (status == 1 && credit != null) {
+            project.setCredit(credit);
+        }
         
         return updateById(project);
     }

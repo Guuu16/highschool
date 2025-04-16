@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `project` (
   `description` TEXT COMMENT '项目简介',
   `plan_file_url` VARCHAR(255) DEFAULT NULL COMMENT '项目计划书文件路径',
   `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-待审核，1-已通过，2-已拒绝',
+  `credit` INT NOT NULL DEFAULT 0 COMMENT '项目学分',
   `feedback` TEXT COMMENT '教师/管理员反馈信息',
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
@@ -119,3 +120,18 @@ CREATE TABLE IF NOT EXISTS `mentor_application` (
   CONSTRAINT `fk_application_student` FOREIGN KEY (`student_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_application_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生导师申请表';
+
+-- 学生详细信息表
+CREATE TABLE IF NOT EXISTS `student_detail` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `student_id` BIGINT NOT NULL COMMENT '关联用户ID',
+  `student_number` VARCHAR(50) NOT NULL COMMENT '学号',
+  `college` VARCHAR(100) NOT NULL COMMENT '学院',
+  `major` VARCHAR(100) NOT NULL COMMENT '专业',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_student_id` (`student_id`),
+  UNIQUE KEY `uk_student_number` (`student_number`),
+  CONSTRAINT `fk_student_detail_user` FOREIGN KEY (`student_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学生详细信息表';

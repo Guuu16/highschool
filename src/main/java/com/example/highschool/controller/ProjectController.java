@@ -1,5 +1,6 @@
 package com.example.highschool.controller;
 
+import com.example.highschool.dto.ProjectDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.highschool.common.api.Result;
@@ -30,7 +31,7 @@ public class ProjectController {
 
     @PostMapping
     @Operation(summary = "创建项目", description = "学生创建项目")
-    public Result<Project> createProject(@RequestBody Project project) {
+    public Result<Project> createProject(@RequestBody ProjectDTO projectDTO) {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         
@@ -39,8 +40,22 @@ public class ProjectController {
             return Result.forbidden("只有学生可以创建项目");
         }
         
-        // 设置学生ID
-        project.setStudentId(currentUser.getId());
+        // 验证学生ID是否匹配当前用户
+        if (projectDTO.getStudentId() != null && !projectDTO.getStudentId().equals(currentUser.getId())) {
+            return Result.forbidden("学生ID必须与当前用户ID一致");
+        }
+        
+        // 转换DTO到Entity
+        Project project = new Project();
+        project.setStudentId(currentUser.getId()); // 强制使用当前用户ID
+        project.setTeacherId(projectDTO.getTeacherId());
+        project.setTitle(projectDTO.getTitle());
+        project.setDescription(projectDTO.getDescription());
+        project.setCategoryId(projectDTO.getCategoryId());
+        project.setStatus(0); // 默认待审核状态
+        project.setCredit(projectDTO.getCredit());
+        project.setFeedback(projectDTO.getFeedback());
+        project.setPlanFileUrl(projectDTO.getPlanFileUrl());
         
         // 创建项目
         Project createdProject = projectService.createProject(project);
@@ -122,6 +137,9 @@ public class ProjectController {
     public Result<List<Project>> getStudentProjects() {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return Result.failed("未获取到当前用户信息，请检查是否已登录");
+        }
         
         // 验证是否为学生
         if (!"STUDENT".equals(currentUser.getRole())) {
@@ -129,6 +147,7 @@ public class ProjectController {
         }
         
         // 获取学生项目
+        System.out.println("currentUser.getId() = " + currentUser.getId());
         List<Project> projects = projectService.getStudentProjects(currentUser.getId());
         return Result.success(projects);
     }
@@ -154,7 +173,8 @@ public class ProjectController {
     public Result<Boolean> reviewProject(
             @PathVariable Long id,
             @RequestParam Integer status,
-            @RequestParam(required = false) String feedback) {
+            @RequestParam(required = false) String feedback,
+            @RequestParam(required = false) Integer credit) {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         
@@ -175,7 +195,7 @@ public class ProjectController {
         }
         
         // 审核项目
-        boolean result = projectService.reviewProject(id, currentUser.getId(), status, feedback);
+        boolean result = projectService.reviewProject(id, currentUser.getId(), status, feedback, credit);
         return Result.success(result);
     }
 }

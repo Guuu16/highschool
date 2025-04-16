@@ -1,5 +1,6 @@
 package com.example.highschool.service.impl;
 
+import com.example.highschool.dto.PasswordUpdateDTO;
 import java.util.Map;
 import java.util.HashMap;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -165,5 +166,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq("status", 1); // 只查询启用状态的教师
         queryWrapper.orderByDesc("create_time");
         return list(queryWrapper);
+    }
+    
+    @Override
+    public boolean updatePassword(PasswordUpdateDTO passwordUpdateDTO) {
+        // 获取当前用户
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return false;
+        }
+        
+        // 验证旧密码
+        if (!passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), currentUser.getPassword())) {
+            return false;
+        }
+        
+        // 检查新密码和确认密码是否一致
+        if (!passwordUpdateDTO.getNewPassword().equals(passwordUpdateDTO.getConfirmPassword())) {
+            return false;
+        }
+        
+        // 加密新密码并更新
+        currentUser.setPassword(passwordEncoder.encode(passwordUpdateDTO.getNewPassword()));
+        currentUser.setUpdateTime(LocalDateTime.now());
+        
+        return updateById(currentUser);
     }
 }

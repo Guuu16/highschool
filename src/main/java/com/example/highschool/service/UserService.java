@@ -1,5 +1,6 @@
 package com.example.highschool.service;
 
+import com.example.highschool.dto.PasswordUpdateDTO;
 import java.util.Map;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -87,4 +88,12 @@ public interface UserService extends IService<User> {
      * @return 教师列表
      */
     List<User> getTeacherList();
+    
+    /**
+     * 修改密码
+     *
+     * @param passwordUpdateDTO 密码更新DTO
+     * @return 修改结果
+     */
+    boolean updatePassword(PasswordUpdateDTO passwordUpdateDTO);
 }

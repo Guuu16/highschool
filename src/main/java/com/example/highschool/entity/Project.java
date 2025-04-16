@@ -64,6 +64,11 @@ public class Project implements Serializable {
     private String planFileUrl;
 
     /**
+     * 学分
+     */
+    private Integer credit;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

@@ -1,7 +1,9 @@
 package com.example.highschool.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.example.highschool.entity.StudentDetail;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -157,5 +159,25 @@ public class User implements Serializable {
      */
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    /**
+     * 学生详细信息(非数据库字段)
+     */
+    @TableField(exist = false)
+    private StudentDetail studentDetail;
+
+    /**
+     * 获取学生详细信息
+     */
+    public StudentDetail getStudentDetail() {
+        return studentDetail;
+    }
+
+    /**
+     * 设置学生详细信息
+     */
+    public void setStudentDetail(StudentDetail studentDetail) {
+        this.studentDetail = studentDetail;
     }
 }
