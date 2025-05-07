@@ -30,8 +30,8 @@ public class SecurityConfig {
                         .requestMatchers("/user/login", "/user/register").permitAll()
                         // 允许所有人访问Swagger文档
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        // 允许所有人访问hello接口
-                        .requestMatchers("/hello").permitAll()
+                        // 允许所有人访问hello接口和上传文件
+                        .requestMatchers("/hello", "/uploads/**").permitAll()
                         // 管理员接口权限
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // 教师接口权限

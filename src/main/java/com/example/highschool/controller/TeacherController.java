@@ -1,6 +1,7 @@
 package com.example.highschool.controller;
 
 import com.example.highschool.common.api.Result;
+import com.example.highschool.dto.ProjectReviewDTO;
 import com.example.highschool.entity.MentorApplication;
 import com.example.highschool.entity.Project;
 import com.example.highschool.entity.ProjectProgress;
@@ -45,16 +46,34 @@ public class TeacherController {
         return Result.success(projects);
     }
 
-    @PutMapping("/project/{id}/review")
+    @PutMapping(value = "/projects/{id}/review", consumes = "application/json")
     @Operation(summary = "审核项目", description = "教师审核学生提交的项目")
     public Result<Boolean> reviewProject(
             @PathVariable Long id,
             @RequestParam Integer status,
-            @RequestParam(required = false) String feedback,
-            @RequestParam(required = false) Integer credit) {
+            @RequestBody(required = false) ProjectReviewDTO reviewDTO) {
+        // 处理空请求体
+        if (reviewDTO == null) {
+            reviewDTO = new ProjectReviewDTO();
+            System.out.println("使用默认DTO对象");
+        }
+        
+        System.out.println("项目审核请求参数 - 项目ID: " + id);
+        System.out.println("DTO内容: " + reviewDTO);
+
         // 获取当前教师ID的逻辑
         Long teacherId = getCurrentTeacherId();
-        boolean result = projectService.reviewProject(id, teacherId, status, feedback, credit);
+        System.out.println("当前教师ID: " + teacherId);
+        
+        boolean result = projectService.reviewProject(
+            id, 
+            teacherId, 
+            status,
+            reviewDTO != null ? reviewDTO.getFeedback() : null,
+            reviewDTO != null ? reviewDTO.getCredit() : null
+        );
+        System.out.println("审核结果: " + result);
+        
         return Result.success(result);
     }
 
@@ -109,6 +128,15 @@ public class TeacherController {
      * @return 当前登录教师ID
      * @throws RuntimeException 当前用户不是教师或未登录时抛出异常
      */
+    @GetMapping("/students")
+    @Operation(summary = "获取学生列表", description = "获取所有学生列表(与/api/api/student/teachers接口对应)")
+    public Result<List<User>> getStudentsByTeacher() {
+        List<User> students = userService.getStudentList();
+        // 不返回密码
+        students.forEach(student -> student.setPassword(null));
+        return Result.success(students);
+    }
+
     private Long getCurrentTeacherId() {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {

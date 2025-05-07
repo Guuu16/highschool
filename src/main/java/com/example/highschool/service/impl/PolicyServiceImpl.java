@@ -21,11 +21,15 @@ public class PolicyServiceImpl extends ServiceImpl<PolicyMapper, Policy> impleme
 
     @Override
     public Policy createPolicy(Policy policy) {
-        // 设置发布时间和创建时间
+        // 设置创建时间和更新时间
         LocalDateTime now = LocalDateTime.now();
-        policy.setPublishedAt(now);
         policy.setCreateTime(now);
         policy.setUpdateTime(now);
+        
+        // 如果未设置发布时间，则使用当前时间
+        if (policy.getPublishedAt() == null) {
+            policy.setPublishedAt(now);
+        }
         
         // 保存政策公告
         save(policy);

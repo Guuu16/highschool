@@ -1,9 +1,12 @@
 package com.example.highschool.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
+import java.time.LocalDateTime;
 
 /**
  * 项目数据传输对象
@@ -11,6 +14,8 @@ import lombok.Data;
 @Data
 @Schema(description = "项目信息DTO")
 public class ProjectDTO {
+    @Schema(description = "项目计划文件", hidden = true)
+    private MultipartFile planFile;
     @Schema(description = "项目ID")
     private Long id;
 
@@ -42,6 +47,16 @@ public class ProjectDTO {
     @Schema(description = "反馈意见")
     private String feedback;
 
-    @Schema(description = "计划文件URL")
+    @Schema(description = "计划文件URL(由后端自动生成，前端无需填写)")
     private String planFileUrl;
+
+    @Schema(description = "创建时间")
+    private LocalDateTime createTime;
+
+    @Schema(description = "更新时间") 
+    private LocalDateTime updateTime;
+
+    @Schema(description = "发布时间")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime publishedAt;
 }

@@ -45,6 +45,7 @@ public interface UserService extends IService<User> {
      * @return 用户信息
      */
     User getCurrentUser();
+    List<User> getStudentList();
 
     /**
      * 更新用户信息
@@ -88,6 +89,13 @@ public interface UserService extends IService<User> {
      * @return 教师列表
      */
     List<User> getTeacherList();
+
+    /**
+     * 获取选择指定教师的学生列表
+     * @param teacherId 教师ID
+     * @return 学生列表
+     */
+    List<User> getStudentsByTeacher(Long teacherId);
     
     /**
      * 修改密码

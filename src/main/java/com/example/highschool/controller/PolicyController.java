@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.example.highschool.dto.PolicyDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -30,7 +32,18 @@ public class PolicyController {
 
     @PostMapping
     @Operation(summary = "创建政策公告", description = "管理员创建政策公告")
-    public Result<Policy> createPolicy(@RequestBody Policy policy) {
+    public Result<Policy> createPolicy(@RequestBody PolicyDTO policyDTO) {
+        System.out.println("Received publishedAt: " + policyDTO.getPublishedAt()); // 添加调试日志
+        // 转换DTO到Entity
+        Policy policy = new Policy();
+        policy.setTitle(policyDTO.getTitle());
+        policy.setContent(policyDTO.getContent());
+        // 确保使用前端传递的时间
+        if (policyDTO.getPublishedAt() != null) {
+            policy.setPublishedAt(policyDTO.getPublishedAt());
+        } else {
+            policy.setPublishedAt(LocalDateTime.now());
+        }
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
@@ -44,6 +57,8 @@ public class PolicyController {
         
         // 设置创建者
         policy.setCreatedBy(currentUser.getId());
+        
+        // 确保使用前端传递的时间（不再覆盖）
         
         // 创建政策公告
         Policy createdPolicy = policyService.createPolicy(policy);

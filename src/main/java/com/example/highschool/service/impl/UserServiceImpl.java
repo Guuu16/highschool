@@ -3,6 +3,7 @@ package com.example.highschool.service.impl;
 import com.example.highschool.dto.PasswordUpdateDTO;
 import java.util.Map;
 import java.util.HashMap;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -82,9 +83,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User getUserByUsername(String username) {
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("username", username);
-        return getOne(wrapper);
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        return getOne(queryWrapper);
+    }
+
+    // @Override
+    // public List<User> getTeacherList() {
+    //     LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+    //     queryWrapper.eq(User::getRole, "TEACHER");
+    //     queryWrapper.eq(User::getStatus, 1); // 只查询启用状态的教师
+    //     return list(queryWrapper);
+    // }
+
+    @Override
+    public List<User> getStudentList() {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getRole, "STUDENT");
+        queryWrapper.eq(User::getStatus, 1); // 只查询启用状态的学生
+        return list(queryWrapper);
     }
 
     @Override
@@ -100,13 +117,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public boolean updateUser(User user) {
-        // 设置更新时间
-        user.setUpdateTime(LocalDateTime.now());
-        
-        // 如果密码不为空，则加密密码
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // 获取当前数据库中的用户信息
+        User existingUser = getById(user.getId());
+        if (existingUser == null) {
+            return false;
         }
+        
+        // 只更新允许修改的字段
+        existingUser.setRealName(user.getRealName());
+        existingUser.setEmail(user.getEmail());
+        existingUser.setPhone(user.getPhone());
+        existingUser.setUpdateTime(LocalDateTime.now());
+        
+        // 保留原密码不修改
+        user.setPassword(existingUser.getPassword());
         
         return updateById(user);
     }
@@ -169,6 +193,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
     
     @Override
+    public List<User> getStudentsByTeacher(Long teacherId) {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.inSql("id", 
+            "SELECT DISTINCT student_id FROM project WHERE teacher_id = " + teacherId);
+        queryWrapper.eq("role", "STUDENT");
+        queryWrapper.eq("status", 1); // 只查询启用状态的学生
+        return list(queryWrapper);
+    }
+
     public boolean updatePassword(PasswordUpdateDTO passwordUpdateDTO) {
         // 获取当前用户
         User currentUser = getCurrentUser();

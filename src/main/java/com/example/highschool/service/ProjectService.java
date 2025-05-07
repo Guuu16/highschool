@@ -1,5 +1,8 @@
 package com.example.highschool.service;
 
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import com.example.highschool.dto.ProjectDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.highschool.entity.Project;
@@ -17,7 +20,8 @@ public interface ProjectService {
      * @param project 项目信息
      * @return 创建的项目
      */
-    Project createProject(Project project);
+    String uploadPlanFile(MultipartFile file) throws IOException;
+    Project createProject(ProjectDTO projectDTO);
 
     /**
      * 更新项目
@@ -26,6 +30,7 @@ public interface ProjectService {
      * @return 更新后的项目
      */
     Project updateProject(Project project);
+    Project updateProject(ProjectDTO projectDTO);
 
     /**
      * 删除项目

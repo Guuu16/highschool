@@ -3,7 +3,7 @@ package com.example.highschool.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.example.highschool.entity.StudentDetail;
+// import com.example.highschool.entity.StudentDetail;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -104,12 +104,12 @@ public class User implements Serializable {
     public void setUsername(String username) {
         this.username = username;
     }
-    
+
     /**
-     * 获取密码
+     * 获取真实姓名
      */
-    public String getPassword() {
-        return password;
+    public String getRealName() {
+        return realName;
     }
     
     /**

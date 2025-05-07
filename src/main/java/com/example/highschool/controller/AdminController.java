@@ -1,5 +1,6 @@
 package com.example.highschool.controller;
 
+import com.example.highschool.dto.UserStatusDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.highschool.common.api.Result;
@@ -35,10 +36,10 @@ public class AdminController {
         return Result.success(userPage);
     }
 
-    @PutMapping("/user/{id}/status")
+    @PutMapping("/user/status")
     @Operation(summary = "修改用户状态", description = "管理员修改用户启用/禁用状态")
-    public Result<Boolean> updateUserStatus(@PathVariable Long id, @RequestParam Integer status) {
-        boolean result = userService.updateUserStatus(id, status);
+    public Result<Boolean> updateUserStatus(@RequestBody UserStatusDTO userStatusDTO) {
+        boolean result = userService.updateUserStatus(userStatusDTO.getId(), userStatusDTO.getStatus());
         return Result.success(result);
     }
 

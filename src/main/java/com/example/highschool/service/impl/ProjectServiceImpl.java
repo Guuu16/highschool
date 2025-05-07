@@ -1,5 +1,13 @@
 package com.example.highschool.service.impl;
 
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
+import com.example.highschool.dto.ProjectDTO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,7 +28,29 @@ import java.util.List;
 public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> implements ProjectService {
 
     @Override
-    public Project createProject(Project project) {
+    public String uploadPlanFile(MultipartFile file) throws IOException {
+        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path uploadPath = Paths.get("uploads");
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        Path filePath = uploadPath.resolve(fileName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        return "/api/uploads/" + fileName;
+    }
+
+    @Override
+    public Project createProject(ProjectDTO projectDTO) {
+        Project project = new Project();
+        project.setStudentId(projectDTO.getStudentId());
+        project.setTeacherId(projectDTO.getTeacherId());
+        project.setTitle(projectDTO.getTitle());
+        project.setDescription(projectDTO.getDescription());
+        project.setCategoryId(projectDTO.getCategoryId());
+        project.setStatus(projectDTO.getStatus());
+        project.setCredit(projectDTO.getCredit());
+        project.setPlanFileUrl(projectDTO.getPlanFileUrl());
+        
         // 设置创建时间和更新时间
         LocalDateTime now = LocalDateTime.now();
         project.setCreateTime(now);
@@ -39,6 +69,25 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         project.setUpdateTime(LocalDateTime.now());
         
         // 更新项目
+        updateById(project);
+        return project;
+    }
+
+    @Override
+    public Project updateProject(ProjectDTO projectDTO) {
+        Project project = new Project();
+        // 复制DTO到实体
+        project.setId(projectDTO.getId());
+        project.setStudentId(projectDTO.getStudentId());
+        project.setTeacherId(projectDTO.getTeacherId());
+        project.setCategoryId(projectDTO.getCategoryId());
+        project.setTitle(projectDTO.getTitle());
+        project.setDescription(projectDTO.getDescription());
+        project.setStatus(projectDTO.getStatus());
+        project.setCredit(projectDTO.getCredit());
+        project.setPlanFileUrl(projectDTO.getPlanFileUrl());
+        project.setUpdateTime(LocalDateTime.now());
+        
         updateById(project);
         return project;
     }

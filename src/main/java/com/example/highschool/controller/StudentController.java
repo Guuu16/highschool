@@ -37,15 +37,15 @@ public class StudentController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/project")
-    @Operation(summary = "创建项目", description = "学生创建新的创新创业项目")
-    public Result<Project> createProject(@RequestBody Project project) {
-        // 获取当前学生ID
-        Long studentId = getCurrentStudentId();
-        project.setStudentId(studentId);
-        Project createdProject = projectService.createProject(project);
-        return Result.success(createdProject);
-    }
+    // @PostMapping("/project")
+    // @Operation(summary = "创建项目", description = "学生创建新的创新创业项目")
+    // public Result<Project> createProject(@RequestBody Project project) {
+    //     // 获取当前学生ID
+    //     Long studentId = getCurrentStudentId();
+    //     project.setStudentId(studentId);
+    //     Project createdProject = projectService.createProject(project);
+    //     return Result.success(createdProject);
+    // }
 
     @GetMapping("/projects")
     @Operation(summary = "获取学生的项目", description = "获取当前登录学生的所有项目")

@@ -1,5 +1,8 @@
 package com.example.highschool.controller;
 
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import com.example.highschool.dto.ProjectDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -29,9 +32,16 @@ public class ProjectController {
     @Autowired
     private UserService userService;
 
-    @PostMapping
-    @Operation(summary = "创建项目", description = "学生创建项目")
-    public Result<Project> createProject(@RequestBody ProjectDTO projectDTO) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "创建项目", description = "学生创建项目(支持文件上传)")
+    @ResponseBody
+    public Result<Project> createProject(
+            @RequestParam Long teacherId,
+            @RequestParam Long categoryId,
+            @RequestParam String title,
+            @RequestParam String description,
+            @RequestParam(required = false) Integer credit,
+            @RequestParam(required = false) MultipartFile planFile) {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         
@@ -40,31 +50,48 @@ public class ProjectController {
             return Result.forbidden("只有学生可以创建项目");
         }
         
-        // 验证学生ID是否匹配当前用户
-        if (projectDTO.getStudentId() != null && !projectDTO.getStudentId().equals(currentUser.getId())) {
-            return Result.forbidden("学生ID必须与当前用户ID一致");
+        // 创建项目DTO并设置字段
+        ProjectDTO projectDTO = new ProjectDTO();
+        projectDTO.setStudentId(currentUser.getId());
+        projectDTO.setTeacherId(teacherId);
+        projectDTO.setCategoryId(categoryId);
+        projectDTO.setTitle(title);
+        projectDTO.setDescription(description);
+        projectDTO.setStatus(0); // 默认状态
+        projectDTO.setCredit(credit != null ? credit : 0); // 使用传入的学分或默认为0
+        
+        // 处理文件上传
+        if (planFile != null && !planFile.isEmpty()) {
+            System.out.println("接收到文件: " + planFile.getOriginalFilename() + ", 大小: " + planFile.getSize());
+            try {
+                String fileUrl = projectService.uploadPlanFile(planFile);
+                System.out.println("文件保存路径: " + fileUrl);
+                projectDTO.setPlanFileUrl(fileUrl);
+            } catch (IOException e) {
+                System.err.println("文件上传失败: ");
+                e.printStackTrace();
+                return Result.failed("文件上传失败: " + e.getMessage());
+            }
+        } else {
+            System.out.println("未接收到文件或文件为空");
         }
         
-        // 转换DTO到Entity
-        Project project = new Project();
-        project.setStudentId(currentUser.getId()); // 强制使用当前用户ID
-        project.setTeacherId(projectDTO.getTeacherId());
-        project.setTitle(projectDTO.getTitle());
-        project.setDescription(projectDTO.getDescription());
-        project.setCategoryId(projectDTO.getCategoryId());
-        project.setStatus(0); // 默认待审核状态
-        project.setCredit(projectDTO.getCredit());
-        project.setFeedback(projectDTO.getFeedback());
-        project.setPlanFileUrl(projectDTO.getPlanFileUrl());
-        
         // 创建项目
-        Project createdProject = projectService.createProject(project);
+        Project createdProject = projectService.createProject(projectDTO);
         return Result.success(createdProject);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "更新项目", description = "学生更新项目")
-    public Result<Project> updateProject(@PathVariable Long id, @RequestBody Project project) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "更新项目", description = "学生更新项目(支持文件上传)")
+    public Result<Project> updateProject(
+            @PathVariable Long id,
+            @RequestParam Long teacherId,
+            @RequestParam Long categoryId,
+            @RequestParam String title,
+            @RequestParam Integer status,
+            @RequestParam String description,
+            @RequestParam(required = false) Integer credit,
+            @RequestParam(required = false) MultipartFile planFile) {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         
@@ -78,13 +105,31 @@ public class ProjectController {
         if (!existingProject.getStudentId().equals(currentUser.getId())) {
             return Result.forbidden("无权限修改此项目");
         }
+
+        // 处理文件上传
+        String fileUrl = existingProject.getPlanFileUrl();
+        if (planFile != null && !planFile.isEmpty()) {
+            try {
+                fileUrl = projectService.uploadPlanFile(planFile);
+            } catch (IOException e) {
+                return Result.failed("文件上传失败: " + e.getMessage());
+            }
+        }
         
-        // 设置ID和学生ID
-        project.setId(id);
-        project.setStudentId(currentUser.getId());
+        // 创建项目DTO并更新字段
+        ProjectDTO projectDTO = new ProjectDTO();
+        projectDTO.setId(id);
+        projectDTO.setStudentId(currentUser.getId());
+        projectDTO.setTeacherId(teacherId);
+        projectDTO.setCategoryId(categoryId);
+        projectDTO.setTitle(title);
+        projectDTO.setStatus(status);
+        projectDTO.setDescription(description);
+        projectDTO.setCredit(credit != null ? credit : existingProject.getCredit());
+        projectDTO.setPlanFileUrl(fileUrl);
         
         // 更新项目
-        Project updatedProject = projectService.updateProject(project);
+        Project updatedProject = projectService.updateProject(projectDTO);
         return Result.success(updatedProject);
     }
 
@@ -147,9 +192,53 @@ public class ProjectController {
         }
         
         // 获取学生项目
-        System.out.println("currentUser.getId() = " + currentUser.getId());
         List<Project> projects = projectService.getStudentProjects(currentUser.getId());
         return Result.success(projects);
+    }
+
+    @PostMapping(value = "/student", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "学生提交项目", description = "学生提交项目(支持文件上传)")
+    public Result<Project> submitStudentProject(
+            @RequestPart Long categoryId,
+            @RequestPart Long teacherId,
+            @RequestPart String title,
+            @RequestPart String description,
+            @RequestPart Integer status,
+            @RequestPart Integer credit,
+            @RequestPart("planFile") MultipartFile planFile) {
+        
+        // 获取当前用户
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return Result.failed("未获取到当前用户信息，请检查是否已登录");
+        }
+        
+        // 验证是否为学生
+        if (!"STUDENT".equals(currentUser.getRole())) {
+            return Result.forbidden("只有学生可以提交项目");
+        }
+        
+        try {
+            // 处理文件上传
+            String fileUrl = projectService.uploadPlanFile(planFile);
+            
+            // 创建项目DTO
+            ProjectDTO projectDTO = new ProjectDTO();
+            projectDTO.setStudentId(currentUser.getId());
+            projectDTO.setTeacherId(teacherId);
+            projectDTO.setTitle(title);
+            projectDTO.setDescription(description);
+            projectDTO.setCategoryId(categoryId);
+            projectDTO.setStatus(status);
+            projectDTO.setCredit(credit);
+            projectDTO.setPlanFileUrl(fileUrl);
+            
+            // 创建项目
+            Project project = projectService.createProject(projectDTO);
+            return Result.success(project);
+        } catch (IOException e) {
+            return Result.failed("文件上传失败: " + e.getMessage());
+        }
     }
 
     @GetMapping("/teacher")
