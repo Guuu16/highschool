@@ -39,6 +39,11 @@ public class ProjectProgress implements Serializable {
     private String description;
 
     /**
+     * 进度百分比(0-100)
+     */
+    private Integer progress;
+
+    /**
      * 附件路径
      */
     private String fileUrl;

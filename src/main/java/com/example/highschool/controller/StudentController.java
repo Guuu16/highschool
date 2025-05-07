@@ -12,9 +12,14 @@ import com.example.highschool.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -56,25 +61,42 @@ public class StudentController {
         return Result.success(projects);
     }
 
-    @PostMapping("/project/{id}/progress")
+    @PostMapping(value = "/project/{id}/progress", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "提交项目进度", description = "学生提交项目进度")
     public Result<ProjectProgress> submitProjectProgress(
             @PathVariable Long id,
-            @RequestBody ProjectProgress progress,
+            @RequestParam Integer progressPercent,
+            @RequestParam String phaseTitle,
+            @RequestParam String description,
             @RequestParam(required = false) MultipartFile file) {
         // 获取当前学生ID
         Long studentId = getCurrentStudentId();
+        System.out.println("当前学生ID: " + studentId);
         // 验证项目是否属于当前学生
         Project project = projectService.getProjectById(id);
-        if (project == null || !project.getStudentId().equals(studentId)) {
-            return Result.failed("项目不存在或无权限操作");
+        System.out.println("查询到的项目: " + (project != null ? project.getId() : "null"));
+        if (project == null) {
+            return Result.failed("项目不存在");
+        }
+        if (!project.getStudentId().equals(studentId)) {
+            System.out.println("权限验证失败: 项目学生ID=" + project.getStudentId() + ", 当前学生ID=" + studentId);
+            return Result.failed("无权限操作该项目");
         }
         
+        ProjectProgress progress = new ProjectProgress();
         progress.setProjectId(id);
+        progress.setProgress(progressPercent);
+        progress.setPhaseTitle(phaseTitle);
+        progress.setDescription(description);
+        
         // 如果有文件上传，处理文件上传逻辑
         if (file != null && !file.isEmpty()) {
-            String fileUrl = uploadFile(file);
-            progress.setFileUrl(fileUrl);
+            try {
+                String fileUrl = projectService.uploadPlanFile(file);
+                progress.setFileUrl(fileUrl);
+            } catch (IOException e) {
+                return Result.failed("文件上传失败: " + e.getMessage());
+            }
         }
         
         ProjectProgress savedProgress = projectProgressService.submitProgress(progress);
@@ -125,12 +147,9 @@ public class StudentController {
     
     /**
      * 获取当前登录学生ID
-     * 实际实现应该从SecurityContext中获取当前用户信息
      */
     private Long getCurrentStudentId() {
-        // 这里应该从SecurityContext中获取当前用户信息
-        // 为了示例，这里直接返回一个假的ID
-        return 1L;
+        return userService.getCurrentUser().getId();
     }
     
     /**
