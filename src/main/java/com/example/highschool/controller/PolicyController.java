@@ -129,7 +129,7 @@ public class PolicyController {
 
     @GetMapping("/latest")
     @Operation(summary = "获取最新政策公告", description = "获取最新的几条政策公告")
-    public Result<List<Policy>> getLatestPolicies(@RequestParam(defaultValue = "5") Integer limit) {
+    public Result<List<Policy>> getLatestPolicies(@RequestParam(defaultValue = "1") Integer limit) {
         List<Policy> policies = policyService.getLatestPolicies(limit);
         return Result.success(policies);
     }}
