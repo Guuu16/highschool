@@ -4,6 +4,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import com.example.highschool.dto.ProjectDTO;
+import com.example.highschool.dto.ProjectReviewDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.highschool.common.api.Result;
@@ -261,9 +262,7 @@ public class ProjectController {
     @Operation(summary = "审核项目", description = "教师审核学生提交的项目")
     public Result<Boolean> reviewProject(
             @PathVariable Long id,
-            @RequestParam Integer status,
-            @RequestParam(required = false) String feedback,
-            @RequestParam(required = false) Integer credit) {
+            @RequestBody ProjectReviewDTO reviewDTO) {
         // 获取当前用户
         User currentUser = userService.getCurrentUser();
         
@@ -284,7 +283,13 @@ public class ProjectController {
         }
         
         // 审核项目
-        boolean result = projectService.reviewProject(id, currentUser.getId(), status, feedback, credit);
+        boolean result = projectService.reviewProject(
+            id, 
+            currentUser.getId(), 
+            reviewDTO.getStatus(), 
+            reviewDTO.getFeedback(), 
+            reviewDTO.getCredit()
+        );
         return Result.success(result);
     }
 }
